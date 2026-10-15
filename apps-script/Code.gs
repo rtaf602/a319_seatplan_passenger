@@ -120,16 +120,18 @@ function seatList_() {
   return L; // 39 ที่นั่ง
 }
 const ROWS = LAYOUT.map(function (r) { return r[1]; });
-// Front Crew Zone (1A) เป็นที่นั่งลูกเรือเสมอ · Middle Crew Zone (6F) แอดมินเลือกกั้น / ไม่กั้นเอง (ค่าเริ่มต้น ไม่กั้น)
-const FIXED_CREW = { '1': 1 }, MID_ROW = '6';
-function crewChoice_(k) { return ROWS.indexOf(k) >= 0 && !FIXED_CREW[k] && k !== MID_ROW; }
+// ไม่มีโซนไหนถูกกั้นอัตโนมัติ แอดมินเลือกเอง (ค่าเริ่มต้น ไม่กั้น):
+//   หัวเครื่อง = แถว 1 (Front Crew Zone) ถึงแถวที่เลือก ได้ไม่เกินแถว 5 · Middle Crew Zone (6F) = กั้น / ไม่กั้น
+//   ท้ายเครื่อง = แถวที่เลือก (6/7 ถึง 11/12) ถึงแถวสุดท้าย
+const MID_ROW = '6', FRONT_MAX = '5';
+function frontChoice_(k) { const i = ROWS.indexOf(k); return i >= 0 && i <= ROWS.indexOf(FRONT_MAX); }
+function rearChoice_(k) { return ROWS.indexOf(k) > ROWS.indexOf(MID_ROW); }
 const SEAT_ROW = (function () { const o = {}; seatList_().forEach(function (s) { o[s[0]] = s[2]; }); return o; })();
-// CREW ZONE: Front Crew Zone + Middle Crew Zone (ถ้าเลือกกั้น) + หัวเครื่อง = แถวแรกถึงแถวที่เลือก, ท้ายเครื่อง = แถวที่เลือกถึงแถวสุดท้าย
+// CREW ZONE: Middle Crew Zone (ถ้าเลือกกั้น) + หัวเครื่อง = แถวแรกถึงแถวที่เลือก, ท้ายเครื่อง = แถวที่เลือกถึงแถวสุดท้าย
 function crewRows_(c) {
   const set = {}, front = String(c.front || ''), rear = String(c.rear || '');
-  Object.keys(FIXED_CREW).forEach(function (k) { set[k] = 1; });
   if (c.mid === MID_ON) set[MID_ROW] = 1;
-  const fi = crewChoice_(front) ? ROWS.indexOf(front) : -1, ri = crewChoice_(rear) ? ROWS.indexOf(rear) : -1;
+  const fi = frontChoice_(front) ? ROWS.indexOf(front) : -1, ri = rearChoice_(rear) ? ROWS.indexOf(rear) : -1;
   let i;
   if (fi >= 0) for (i = 0; i <= fi; i++) set[ROWS[i]] = 1;
   if (ri >= 0) for (i = ri; i < ROWS.length; i++) set[ROWS[i]] = 1;
@@ -688,8 +690,8 @@ function opAdminSave_(ctx, b) {
     // กั้นที่นั่งลูกเรือ
     if (b.crew) {
       const nc = { front: clean_(b.crew.front, 6), rear: clean_(b.crew.rear, 6), mid: clean_(b.crew.mid, 6) === MID_ON ? MID_ON : '' };
-      if (nc.front && !crewChoice_(nc.front)) nc.front = '';
-      if (nc.rear && !crewChoice_(nc.rear)) nc.rear = '';
+      if (nc.front && !frontChoice_(nc.front)) nc.front = '';
+      if (nc.rear && !rearChoice_(nc.rear)) nc.rear = '';
       const fi = ROWS.indexOf(nc.front), ri = ROWS.indexOf(nc.rear);
       if (fi >= 0 && ri >= 0 && fi >= ri) throw err_('bad_request', 'กั้นจากหัวเครื่องและท้ายเครื่องซ้อนกัน');
       [['front', CREW_FRONT_ROW, 'หัวเครื่อง'], ['rear', CREW_REAR_ROW, 'ท้ายเครื่อง']].forEach(function (c) {

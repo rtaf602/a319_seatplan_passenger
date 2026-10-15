@@ -6,9 +6,9 @@
 <title>A319 Passenger Seat Plan</title>
 <link rel="icon" href="emblem.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Barlow+Semi+Condensed:wght@400;500;600&family=Sarabun:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="app.css?v=2610160305">
-<link rel="stylesheet" href="boardingpass.css?v=2610160305">
-<script src="config.js?v=2610160305"></script>
+<link rel="stylesheet" href="app.css?v=2610160310">
+<link rel="stylesheet" href="boardingpass.css?v=2610160310">
+<script src="config.js?v=2610160310"></script>
 </head>
 <body>
 
@@ -93,11 +93,11 @@
   <section class="card admin" id="crewCard" hidden>
     <h2>กั้นที่นั่งให้ลูกเรือ (CREW ZONE)</h2>
     <div class="adm">
-      <label class="f"><span>จากหัวเครื่อง ถึงแถว</span><select id="crewFront"></select></label>
+      <label class="f"><span>จากหัวเครื่อง (Front Crew Zone 1A) ถึงแถว · ไม่เกินแถว 5</span><select id="crewFront"></select></label>
       <label class="f"><span>จากท้ายเครื่อง ถึงแถว</span><select id="crewRear"></select></label>
       <label class="f"><span>Middle Crew Zone (Commander Center 6F)</span><select id="crewMid"><option value="">ไม่กั้น (ผู้โดยสารนั่งได้)</option><option value="กั้น">กั้นเป็นที่นั่งลูกเรือ</option></select></label>
     </div>
-    <p class="hint left">Front Crew Zone (1A) เป็นที่นั่งลูกเรือเสมอ · Middle Crew Zone (6F) เลือกกั้นหรือไม่กั้นได้ (ค่าเริ่มต้น ไม่กั้น) · โซนที่กั้นขึ้น <b class="red">CREW ZONE</b> ผู้โดยสารกรอกไม่ได้ และหักออกจากจำนวนที่นั่งว่าง แตะที่นั่งใน CREW ZONE เพื่อกรอกข้อมูลลูกเรือ เปลี่ยนแล้วกด SAVE</p>
+    <p class="hint left">ค่าเริ่มต้นไม่กั้นทุกโซน · หัวเครื่องกั้นจาก Front Crew Zone (1A) ได้ถึงแถว 5 · Middle Crew Zone (6F) เลือกกั้นหรือไม่กั้น · โซนที่กั้นขึ้น <b class="red">CREW ZONE</b> ผู้โดยสารกรอกไม่ได้ และหักออกจากจำนวนที่นั่งว่าง แตะที่นั่งใน CREW ZONE เพื่อกรอกข้อมูลลูกเรือ เปลี่ยนแล้วกด SAVE</p>
   </section>
 
   <div class="legend" id="legend">
@@ -282,8 +282,8 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="excel.js?v=2610160305"></script>
-<script src="boardingpass.js?v=2610160305"></script>
-<script src="app.js?v=2610160305"></script>
+<script src="excel.js?v=2610160310"></script>
+<script src="boardingpass.js?v=2610160310"></script>
+<script src="app.js?v=2610160310"></script>
 </body>
 </html>

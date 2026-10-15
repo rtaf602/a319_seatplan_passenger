@@ -48,7 +48,7 @@ var ZONES=[
    {k:'10/11',mon:['MON-10/11-L','MON-10/11-R']},{k:'10/11',L:['10A','10B','10C'],R:['11D','11E','11F']},
    {k:'11/12',wall:true},{k:'11/12',mon:['MON-11/12-L','MON-11/12-R']},{k:'11/12',L:['11A','11B','11C'],R:['12D','12F']}]}
 ];
-var FIXED_CREW={'1':1},MID_ROW='6',MID_ON='กั้น';   // Front Crew Zone (1A) is always crew · Middle Crew Zone (6F) only when ADMIN chooses กั้น
+var MID_ROW='6',MID_ON='กั้น',FRONT_MAX='5';   // nothing is blocked by default: front = row 1 .. chosen row (max row 5) · Middle Crew Zone (6F) กั้น / ไม่กั้น · rear = chosen row (6/7 ..) .. last row
 var SEATS=[],SEAT={},ROWS=[];
 ZONES.forEach(function(z){z.lines.forEach(function(ln){
   function add(id,row,room){if(ROWS.indexOf(row)<0)ROWS.push(row);SEATS.push(id);SEAT[id]={zone:z.key,row:row,room:!!room}}
@@ -124,9 +124,9 @@ function pending(mode){mode=mode||view;if(!D)return {info:[],pax:[],crew:false,c
   return {info:info,pax:pax,crew:false,crewPax:[],n:info.length+pax.length}}
 
 /* crew zone: fixed crew zones + front = first row .. chosen row, rear = chosen row .. last row */
-function crewChoice(k){return ROWS.indexOf(k)>=0&&!FIXED_CREW[k]&&k!==MID_ROW}
-function crewRows(c){var set={},fi=crewChoice(c.front)?ROWS.indexOf(c.front):-1,ri=crewChoice(c.rear)?ROWS.indexOf(c.rear):-1,i;
-  Object.keys(FIXED_CREW).forEach(function(k){set[k]=1});
+function frontChoice(k){var i=ROWS.indexOf(k);return i>=0&&i<=ROWS.indexOf(FRONT_MAX)}
+function rearChoice(k){return ROWS.indexOf(k)>ROWS.indexOf(MID_ROW)}
+function crewRows(c){var set={},fi=frontChoice(c.front)?ROWS.indexOf(c.front):-1,ri=rearChoice(c.rear)?ROWS.indexOf(c.rear):-1,i;
   if(c.mid===MID_ON)set[MID_ROW]=1;
   if(fi>=0)for(i=0;i<=fi;i++)set[ROWS[i]]=1;
   if(ri>=0)for(i=ri;i<ROWS.length;i++)set[ROWS[i]]=1;
@@ -831,7 +831,7 @@ function excelModel(mode,blank){
       [{label:'FLIGHT',val:getInfo('flight')},{label:'ROUTE',val:getInfo('route')},{label:'DATE',val:getInfo('date')},{label:'GATE',val:getInfo('gate')}],
       [{label:'BOARDING TIME',val:getInfo('time')}]],
     meta:meta,
-    legend:'สัญลักษณ์: ช่องสีฟ้า = มีชื่อแล้ว · ช่องแดงอ่อน × = ที่นั่งใช้ไม่ได้ · เส้นเหลืองหนาใต้ช่อง ! = ที่นั่งขัดข้องแต่ใช้ได้ · ป้าย Monitor สีตามชนิดจอ (ฟ้า 8", เขียว 20", น้ำตาลอ่อน 15", ม่วง OVHD 9") เหลือง = จอเสื่อม แดง = จอเสีย · กรอบแดง CREW ZONE = กันไว้ให้ลูกเรือ (Front Crew Zone เป็นที่นั่งลูกเรือเสมอ)'+(blank?' · ช่องใต้ตัวอักษรที่นั่งไว้กรอกชื่อ':''),
+    legend:'สัญลักษณ์: ช่องสีฟ้า = มีชื่อแล้ว · ช่องแดงอ่อน × = ที่นั่งใช้ไม่ได้ · เส้นเหลืองหนาใต้ช่อง ! = ที่นั่งขัดข้องแต่ใช้ได้ · ป้าย Monitor สีตามชนิดจอ (ฟ้า 8", เขียว 20", น้ำตาลอ่อน 15", ม่วง OVHD 9") เหลือง = จอเสื่อม แดง = จอเสีย · กรอบแดง CREW ZONE = กันไว้ให้ลูกเรือ'+(blank?' · ช่องใต้ตัวอักษรที่นั่งไว้กรอกชื่อ':''),
     zones:zones,listTitle:crewMode?'รายชื่อลูกเรือ':'รายชื่อผู้โดยสาร',
     list:manifestRows(crewMode?'crew':'pax').map(function(r){return {id:r.id,zone:r.zone,th:thFull(r.p),en:enFull(r.p)}}),
     footer:[getInfo('flight'),getInfo('date'),'Seat Plan A319'].filter(Boolean).join(' · ')
@@ -860,8 +860,8 @@ $('pvXls').addEventListener('click',function(){askExcel(pvMode)});
 (function(){var f=$('crewFront'),r=$('crewRear');
   f.appendChild(new Option('ไม่กั้น',''));r.appendChild(new Option('ไม่กั้น',''));
   function lbl(k){return 'แถว '+k+'  ('+zoneOf(SEAT[SEATS.filter(function(s){return SEAT[s].row===k})[0]].zone).title+')'}
-  ROWS.forEach(function(k){if(crewChoice(k))f.appendChild(new Option(lbl(k),k))});
-  ROWS.slice().reverse().forEach(function(k){if(crewChoice(k))r.appendChild(new Option(lbl(k),k))});
+  ROWS.forEach(function(k){if(frontChoice(k))f.appendChild(new Option(lbl(k),k))});
+  ROWS.slice().reverse().forEach(function(k){if(rearChoice(k))r.appendChild(new Option(lbl(k),k))});
 })();
 function renderAdmin(){var c=getCrew();$('crewFront').value=c.front;$('crewRear').value=c.rear;$('crewMid').value=c.mid||'';
   $('crewFront').disabled=$('crewRear').disabled=$('crewMid').disabled=closed();
