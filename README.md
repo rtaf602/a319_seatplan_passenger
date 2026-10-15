@@ -16,7 +16,9 @@
 3. **ผังที่นั่ง A319 (39 ที่นั่ง ทางเดินเดียว A B C | D E F)** ตามแท็บ `ผังที่นั่ง` ของไฟล์ Seat Plan 319 (For Admin):
    - Front Crew Zone: Commander Center 1A (ลูกเรือเสมอ) · Executive Lounge: 2A, 3A + SOFA · First Class: แถว 4-5 (A D F)
    - Middle Crew Zone: Commander Center 6F (ลูกเรือเสมอ) · Business Class: แถว 6/7, 7/8, 8/9 · Y-Class: แถว 9/10, 10/11, 11/12
-   - แถวเหลื่อมกัน เช่น แถว `6/7` = 6A 6C ด้านซ้าย และ 7D 7F ด้านขวา · ป้าย Monitor (Wall / OVHD) แสดงสีตามสภาพจอ
+   - วาดผังแบบเดียวกับหน้า STATUS SEAT PLAN A319 (rtaf602/a319_seatplan): ที่นั่ง 54 × 40 px (PREVIEW / PDF 50 px) ชิดกลางแต่ละฝั่งทางเดิน, ห้อง Commander Center มีป้าย Monitor ในห้อง, 2A 3A ข้าง SOFA, ผนังก่อนแถว 11/12
+   - ป้าย Monitor สีตามชนิดจอ: ฟ้า = Wall 8", เขียว = Wall 20", น้ำตาลอ่อน = Wall 15", แถบม่วง OVHD = Overhead 9" (กว้างเท่าที่นั่งด้านล่าง) · เหลือง = จอเสื่อม · แดง = จอเสีย
+   - EXPORT TO EXCEL ใช้ตาราง 20 คอลัมน์แบบเดียวกับแท็บ `ผังที่นั่ง` ของ Seat Plan 319 (For Admin) (ที่นั่งละ 2 คอลัมน์, เลขแถวคอลัมน์ B)
    - แตะที่นั่งเพื่อกรอก ยศ/ชื่อ/สกุล ภาษาไทย และภาษาอังกฤษ ที่นั่งแสดงชื่อย่อ (มานะ พ. / Mana P.)
    - ปุ่ม **CLEAR** (ล้างเฉพาะรายชื่อ) · **SAVE** (ต้องกรอกชื่อผู้บันทึกทุกครั้ง) · **PREVIEW** · **EXPORT TO PDF** · **PRINT BOARDING PASS**
    - ถ้ามีผู้ SAVE ไปก่อน ระบบไม่บันทึกทับ ให้กด “โหลดข้อมูลล่าสุด” แล้ว SAVE ใหม่

@@ -77,7 +77,7 @@ select option{color:var(--ink);font-weight:500}
 .legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--muted)}
 .legend span{display:inline-flex;align-items:center;gap:6px}
 .sw{width:16px;height:16px;border-radius:3px;display:inline-block;flex:none}
-.sw.mon{width:12px;height:6px;border-radius:2px;margin-right:-3px}
+.sw.mon{width:28px;height:12px;border-radius:3px}
 .sw-empty{background:var(--seat);border:1.5px solid var(--rowno)}
 .sw-occ{background:var(--accent)}
 .sw-warn{background:linear-gradient(to top,var(--warn) 4px,var(--seat) 4px);border:1.5px solid var(--rowno)}
@@ -315,14 +315,38 @@ dialog.wide[open]{display:flex;flex-direction:column}
 .nsec{margin:6px 0 8px;padding-top:10px;border-top:1px solid var(--line);font-size:13px;font-weight:700;color:var(--ink)}
 #newDlg{width:min(560px,calc(100vw - 32px))}
 
-/* A319: single aisle, slots A B C | D E F */
-.grp.side{width:calc(3 * var(--sw) + 2 * var(--sg));justify-content:center}
-.ccrow .grp.side{overflow:visible}
-.sofa{flex:1;align-self:stretch;min-height:38px;border:1.5px dashed var(--muted);border-radius:8px;background:var(--room-bg);color:var(--muted);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;letter-spacing:.25em}
-.report .sofa{min-height:46px}
-.seat .s .lt{font-size:13px}
-.report .seat .s .lt{font-size:11px}
-/* A319 row labels like "10/11" */
-.rowno{width:clamp(30px,9vw,46px);font-size:12px;white-space:nowrap;letter-spacing:-.02em}
-@media (max-width:520px){.rowno{font-size:10.5px}.rows{--sw:clamp(26px,calc((100vw - 120px)/6.6),56px)}}
-.report .rowno{width:46px;font-size:12px}
+/* ===== A319 cabin: same sizes as STATUS SEAT PLAN A319 (rtaf602/a319_seatplan) =====
+   seats packed and centred on each side of the aisle, 54 × 40 px on screen, 50 px in PREVIEW / PDF */
+.rows{--sg:clamp(3px,1vw,8px);--sw:clamp(34px,calc((100vw - 120px)/7),54px);gap:8px}
+.row{display:flex;align-items:flex-end;justify-content:center;gap:0;width:100%}
+.aisle{width:clamp(18px,6vw,56px);flex:none}
+.side{flex:none;display:flex;align-items:flex-end;justify-content:center;gap:var(--sg);width:calc(3 * var(--sw) + 2 * var(--sg));position:relative}
+.side.stretch{align-self:stretch}
+.stack{display:flex;flex-direction:column;gap:20px}
+.seat .s{min-height:40px;border-radius:6px 6px 3px 3px}
+.seat .s .lt{font-size:14px;line-height:1.1}
+.seat.wide{width:calc(2 * var(--sw) + var(--sg))}
+.seat.txt .s .lt{font-family:var(--sans);font-size:11px;font-weight:600;white-space:normal;text-align:center;padding:0 2px}
+.seat.occ .s{min-height:44px}
+.seat.occ .s .lt{font-size:12px}
+.seat.txt.occ .s .lt{font-size:10px}
+.ovhrow{align-items:center;min-height:24px;height:auto;margin:0}
+.ovh{position:relative;left:auto;top:auto;transform:none;border:0;cursor:default;background:var(--tc,var(--ok));color:#10202b;font-size:11px;font-weight:600;border-radius:3px;padding:3px 12px;white-space:nowrap;line-height:1.4}
+.ovh.bin{padding:1px 0;border-radius:999px;font-size:9px;font-weight:700;letter-spacing:.14em;text-align:center;display:block}
+.ovh[data-m="1"]{background:var(--warn);color:#10202b}
+.ovh[data-m="2"]{background:var(--bad);color:#fff}
+.room{display:flex;flex-direction:column;align-items:center;gap:8px;border:2px solid var(--rowno);border-radius:8px;padding:6px 6px 8px;background:var(--room-bg)}
+.roomname{font-size:11px;font-weight:600;color:var(--rowno);line-height:1.2;text-align:center}
+.sofa{width:calc(2 * var(--sw) + var(--sg));align-self:stretch;border-radius:10px;border:2px dashed var(--muted);background:var(--panel);color:var(--muted);font-weight:700;font-size:12px;letter-spacing:.08em;display:flex;align-items:center;justify-content:center}
+.wallrow{align-items:center}
+.wall{width:100%;height:5px;border-radius:2px;background:var(--muted);opacity:.7}
+.crewbox{gap:8px;padding:34px 0 10px}
+.report .rows{--sw:50px;--sg:6px;gap:8px}
+.report .aisle{width:48px}
+.report .seat .s{min-height:40px;font-size:13px;justify-content:center;padding-top:0}
+.report .seat.occ .s{min-height:46px;justify-content:flex-start;padding-top:3px}
+.report .seat .s .lt{font-size:12px}
+.report .seat.txt .s .lt{font-size:10px}
+.report .seat .nm{font-size:8.5px}
+.report .crewbox>.crewlbl{font-size:18px}
+@media (max-width:520px){.seat.occ .nm{font-size:8.5px}.seat .s .lt{font-size:12px}.seat.txt .s .lt{font-size:9.5px}.roomname{font-size:10px}}
