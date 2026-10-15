@@ -3,5 +3,5 @@
  * ห้ามใส่รหัสผ่านหรือรหัสไฟล์ในไฟล์นี้ repo เป็น public ให้ตั้งค่าในส่วน SETUP ของ Apps Script เท่านั้น
  */
 window.SEATPLAN_CONFIG = {
-  API_URL: ''
+  API_URL: 'https://script.google.com/macros/s/AKfycbwe1WDLvGr72Lar3IuCLML2SXl9n3947R5rlVwVI-EeaaYxOp1BtGCgtpM6AZiTgmSDFQ/exec'
 };
