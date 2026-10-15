@@ -48,7 +48,7 @@ var ZONES=[
    {k:'10/11',mon:['MON-10/11-L','MON-10/11-R']},{k:'10/11',L:['10A','10B','10C'],R:['11D','11E','11F']},
    {k:'11/12',wall:true},{k:'11/12',mon:['MON-11/12-L','MON-11/12-R']},{k:'11/12',L:['11A','11B','11C'],R:['12D','12F']}]}
 ];
-var FIXED_CREW={'1':1,'6':1};   // Front Crew Zone (1A) and Middle Crew Zone (6F) are always crew seats
+var FIXED_CREW={'1':1},MID_ROW='6',MID_ON='กั้น';   // Front Crew Zone (1A) is always crew · Middle Crew Zone (6F) only when ADMIN chooses กั้น
 var SEATS=[],SEAT={},ROWS=[];
 ZONES.forEach(function(z){z.lines.forEach(function(ln){
   function add(id,row,room){if(ROWS.indexOf(row)<0)ROWS.push(row);SEATS.push(id);SEAT[id]={zone:z.key,row:row,room:!!room}}
@@ -103,7 +103,8 @@ function persistDraft(){if(!curId||!D)return;try{
   else localStorage.setItem(draftKey(curId),JSON.stringify(D))}catch(e){}}
 function savedInfo(k){return k==='aircraft'?'A319':String((M&&M.info&&M.info[k])||'')}
 function getInfo(k){if(!useSaved&&D&&k in D.info)return D.info[k];return savedInfo(k)}
-function savedCrew(){return {front:String((M&&M.crew&&M.crew.front)||''),rear:String((M&&M.crew&&M.crew.rear)||'')}}
+function savedCrew(){var c=(M&&M.crew)||{};return {front:String(c.front||''),rear:String(c.rear||''),mid:c.mid===MID_ON?MID_ON:''}}
+function sameCrew(a,b){return a.front===b.front&&a.rear===b.rear&&(a.mid||'')===(b.mid||'')}
 function getCrew(){return (!useSaved&&view==='admin'&&D&&D.crew)?D.crew:savedCrew()}
 function getPax(id){var p=(!useSaved&&view==='pax'&&D&&D.pax[id])?D.pax[id].val:(M&&M.pax[id]);return p&&!isEmpty(p)?norm(p):null}
 function getCrewPax(id){if(!M||!M.crewPax)return null;var p=(!useSaved&&view==='admin'&&D&&D.crewPax[id])?D.crewPax[id].val:M.crewPax[id];return p&&!isEmpty(p)?norm(p):null}
@@ -113,7 +114,7 @@ function status(id){var s=M&&M.status&&M.status[id];return {s:s?s.s|0:0,m:s?s.m|
 function closed(){return !!(M&&M.mstatus==='CLOSED')}
 function cleanDraft(){if(!D)return;
   INFO_KEYS.forEach(function(k){if(k in D.info&&D.info[k]===savedInfo(k)){delete D.info[k];delete D.infoBase[k]}});
-  if(D.crew){var c=savedCrew();if(D.crew.front===c.front&&D.crew.rear===c.rear)D.crew=null}
+  if(D.crew){if(sameCrew(D.crew,savedCrew()))D.crew=null}
   Object.keys(D.pax).forEach(function(id){if(!SEAT[id]||same(D.pax[id].val,M&&M.pax[id]))delete D.pax[id]});
   if(M&&M.crewPax)Object.keys(D.crewPax).forEach(function(id){if(!SEAT[id]||same(D.crewPax[id].val,M.crewPax[id]))delete D.crewPax[id]});
 }
@@ -123,9 +124,10 @@ function pending(mode){mode=mode||view;if(!D)return {info:[],pax:[],crew:false,c
   return {info:info,pax:pax,crew:false,crewPax:[],n:info.length+pax.length}}
 
 /* crew zone: fixed crew zones + front = first row .. chosen row, rear = chosen row .. last row */
-function crewChoice(k){return ROWS.indexOf(k)>=0&&!FIXED_CREW[k]}
+function crewChoice(k){return ROWS.indexOf(k)>=0&&!FIXED_CREW[k]&&k!==MID_ROW}
 function crewRows(c){var set={},fi=crewChoice(c.front)?ROWS.indexOf(c.front):-1,ri=crewChoice(c.rear)?ROWS.indexOf(c.rear):-1,i;
   Object.keys(FIXED_CREW).forEach(function(k){set[k]=1});
+  if(c.mid===MID_ON)set[MID_ROW]=1;
   if(fi>=0)for(i=0;i<=fi;i++)set[ROWS[i]]=1;
   if(ri>=0)for(i=ri;i<ROWS.length;i++)set[ROWS[i]]=1;
   return set}
@@ -680,7 +682,7 @@ function afterSaveRes(res,sent,pd,mode){
   if(res&&res.error==='stale'){staleDialog(res.lastSave);return false}
   if(!res||!res.ok){toast('SAVE ไม่สำเร็จ'+(res&&res.message?' ('+res.message+')':'')+' ลองกด SAVE อีกครั้ง',true);return false}
   if(mode==='admin'){
-    if(pd.crew&&D.crew&&sent.crew&&D.crew.front===sent.crew.front&&D.crew.rear===sent.crew.rear)D.crew=null;
+    if(pd.crew&&D.crew&&sent.crew&&sameCrew(D.crew,sent.crew))D.crew=null;
     pd.crewPax.forEach(function(id){if(D.crewPax[id]&&same(D.crewPax[id].val,sent.crewPax[id].val))delete D.crewPax[id]});
   }else{
     pd.info.forEach(function(k){if(D.info[k]===sent.info[k]){delete D.info[k];delete D.infoBase[k]}});
@@ -829,7 +831,7 @@ function excelModel(mode,blank){
       [{label:'FLIGHT',val:getInfo('flight')},{label:'ROUTE',val:getInfo('route')},{label:'DATE',val:getInfo('date')},{label:'GATE',val:getInfo('gate')}],
       [{label:'BOARDING TIME',val:getInfo('time')}]],
     meta:meta,
-    legend:'สัญลักษณ์: ช่องสีฟ้า = มีชื่อแล้ว · ช่องแดงอ่อน × = ที่นั่งใช้ไม่ได้ · เส้นเหลืองหนาใต้ช่อง ! = ที่นั่งขัดข้องแต่ใช้ได้ · ป้าย Monitor สีตามชนิดจอ (ฟ้า 8", เขียว 20", น้ำตาลอ่อน 15", ม่วง OVHD 9") เหลือง = จอเสื่อม แดง = จอเสีย · กรอบแดง CREW ZONE = กันไว้ให้ลูกเรือ (Front / Middle Crew Zone เป็นที่นั่งลูกเรือเสมอ)'+(blank?' · ช่องใต้ตัวอักษรที่นั่งไว้กรอกชื่อ':''),
+    legend:'สัญลักษณ์: ช่องสีฟ้า = มีชื่อแล้ว · ช่องแดงอ่อน × = ที่นั่งใช้ไม่ได้ · เส้นเหลืองหนาใต้ช่อง ! = ที่นั่งขัดข้องแต่ใช้ได้ · ป้าย Monitor สีตามชนิดจอ (ฟ้า 8", เขียว 20", น้ำตาลอ่อน 15", ม่วง OVHD 9") เหลือง = จอเสื่อม แดง = จอเสีย · กรอบแดง CREW ZONE = กันไว้ให้ลูกเรือ (Front Crew Zone เป็นที่นั่งลูกเรือเสมอ)'+(blank?' · ช่องใต้ตัวอักษรที่นั่งไว้กรอกชื่อ':''),
     zones:zones,listTitle:crewMode?'รายชื่อลูกเรือ':'รายชื่อผู้โดยสาร',
     list:manifestRows(crewMode?'crew':'pax').map(function(r){return {id:r.id,zone:r.zone,th:thFull(r.p),en:enFull(r.p)}}),
     footer:[getInfo('flight'),getInfo('date'),'Seat Plan A319'].filter(Boolean).join(' · ')
@@ -861,9 +863,9 @@ $('pvXls').addEventListener('click',function(){askExcel(pvMode)});
   ROWS.forEach(function(k){if(crewChoice(k))f.appendChild(new Option(lbl(k),k))});
   ROWS.slice().reverse().forEach(function(k){if(crewChoice(k))r.appendChild(new Option(lbl(k),k))});
 })();
-function renderAdmin(){var c=getCrew();$('crewFront').value=c.front;$('crewRear').value=c.rear;
-  $('crewFront').disabled=$('crewRear').disabled=closed();
-  [['crewFront',D&&D.crew&&D.crew.front!==savedCrew().front],['crewRear',D&&D.crew&&D.crew.rear!==savedCrew().rear]].forEach(function(x){
+function renderAdmin(){var c=getCrew();$('crewFront').value=c.front;$('crewRear').value=c.rear;$('crewMid').value=c.mid||'';
+  $('crewFront').disabled=$('crewRear').disabled=$('crewMid').disabled=closed();
+  [['crewFront',D&&D.crew&&D.crew.front!==savedCrew().front],['crewRear',D&&D.crew&&D.crew.rear!==savedCrew().rear],['crewMid',D&&D.crew&&(D.crew.mid||'')!==savedCrew().mid]].forEach(function(x){
     if(x[1])$(x[0]).dataset.pending='1';else delete $(x[0]).dataset.pending})}
 $('bAdmin').addEventListener('click',function(){
   if(!M)return;
@@ -882,7 +884,7 @@ function adminLogout(){var t=atok;dropAdmin();setView('pax');window.scrollTo(0,0
   if(t)api({action:'admin.logout',id:curId,at:t,why:'กด LOGOUT'}).catch(function(){})}
 function changeCrew(){
   if(closed())return;
-  var nc={front:$('crewFront').value,rear:$('crewRear').value};
+  var nc={front:$('crewFront').value,rear:$('crewRear').value,mid:$('crewMid').value===MID_ON?MID_ON:''};
   var fi=ROWS.indexOf(nc.front),ri=ROWS.indexOf(nc.rear);
   if(fi>=0&&ri>=0&&fi>=ri){toast('กั้นจากหัวเครื่องและท้ายเครื่องซ้อนกัน เลือกแถวใหม่',true);renderAdmin();return}
   var set=crewRows(nc),hit=SEATS.filter(function(id){return set[SEAT[id].row]&&M.pax[id]&&!isEmpty(M.pax[id])});
@@ -890,7 +892,7 @@ function changeCrew(){
   if(hit.length)ask('มีผู้โดยสารในแถวที่จะกั้น','ที่นั่ง '+hit.join(', ')+' มีรายชื่อผู้โดยสารอยู่ เมื่อกด SAVE รายชื่อในที่นั่งเหล่านี้จะถูกล้างออก','กั้นที่นั่ง',apply,renderAdmin);
   else apply();
 }
-$('crewFront').addEventListener('change',changeCrew);$('crewRear').addEventListener('change',changeCrew);
+$('crewFront').addEventListener('change',changeCrew);$('crewRear').addEventListener('change',changeCrew);$('crewMid').addEventListener('change',changeCrew);
 
 /* ----- PRINT BOARDING PASS ----- */
 var bpList=[],bpMode='pax';

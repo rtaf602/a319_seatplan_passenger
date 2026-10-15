@@ -71,7 +71,8 @@ const INFO = [ // [key, ป้าย, แถว]
   ['time', 'BOARDING TIME', 10],
   ['note', 'หมายเหตุ Boarding Pass', 11]
 ];
-const CREW_FRONT_ROW = 13, CREW_REAR_ROW = 14, LAST_SAVE_ROW = 15, VERSION_ROW = 16;
+const CREW_FRONT_ROW = 13, CREW_REAR_ROW = 14, LAST_SAVE_ROW = 15, VERSION_ROW = 16, CREW_MID_ROW = 17;
+const MID_ON = 'กั้น';   // B17: กั้น Middle Crew Zone (6F) หรือไม่ (ว่าง = ไม่กั้น)
 const PAX_HEAD_ROW = 18, PAX_FIRST_ROW = 19;
 const PAX_HEAD = ['ที่นั่ง', 'โซน', 'ประเภท', 'ยศ (ไทย)', 'ชื่อ (ไทย)', 'สกุล (ไทย)', 'RANK (EN)', 'FIRST NAME (EN)', 'LAST NAME (EN)', 'ผู้บันทึก', 'เวลาบันทึก'];
 const PF = ['rt', 'ft', 'lt', 're', 'fe', 'le'];          // ช่องของคนหนึ่งคน (คอลัมน์ D-I)
@@ -119,14 +120,15 @@ function seatList_() {
   return L; // 39 ที่นั่ง
 }
 const ROWS = LAYOUT.map(function (r) { return r[1]; });
-// Front Crew Zone (1A) และ Middle Crew Zone (6F) เป็นที่นั่งลูกเรือเสมอ
-const FIXED_CREW = { '1': 1, '6': 1 };
-function crewChoice_(k) { return ROWS.indexOf(k) >= 0 && !FIXED_CREW[k]; }
+// Front Crew Zone (1A) เป็นที่นั่งลูกเรือเสมอ · Middle Crew Zone (6F) แอดมินเลือกกั้น / ไม่กั้นเอง (ค่าเริ่มต้น ไม่กั้น)
+const FIXED_CREW = { '1': 1 }, MID_ROW = '6';
+function crewChoice_(k) { return ROWS.indexOf(k) >= 0 && !FIXED_CREW[k] && k !== MID_ROW; }
 const SEAT_ROW = (function () { const o = {}; seatList_().forEach(function (s) { o[s[0]] = s[2]; }); return o; })();
-// CREW ZONE: Crew Zone ประจำเครื่อง + หัวเครื่อง = แถวแรกถึงแถวที่เลือก, ท้ายเครื่อง = แถวที่เลือกถึงแถวสุดท้าย
+// CREW ZONE: Front Crew Zone + Middle Crew Zone (ถ้าเลือกกั้น) + หัวเครื่อง = แถวแรกถึงแถวที่เลือก, ท้ายเครื่อง = แถวที่เลือกถึงแถวสุดท้าย
 function crewRows_(c) {
   const set = {}, front = String(c.front || ''), rear = String(c.rear || '');
   Object.keys(FIXED_CREW).forEach(function (k) { set[k] = 1; });
+  if (c.mid === MID_ON) set[MID_ROW] = 1;
   const fi = crewChoice_(front) ? ROWS.indexOf(front) : -1, ri = crewChoice_(rear) ? ROWS.indexOf(rear) : -1;
   let i;
   if (fi >= 0) for (i = 0; i <= fi; i++) set[ROWS[i]] = 1;
@@ -379,6 +381,7 @@ function setupMissionSheet_(sh) {
   sh.getRange(INFO[0][2], 2).setValue('A319');
   sh.getRange(CREW_FRONT_ROW, 1).setValue('กั้นที่นั่งลูกเรือ หัวเครื่อง ถึงแถว').setFontWeight('bold');
   sh.getRange(CREW_REAR_ROW, 1).setValue('กั้นที่นั่งลูกเรือ ท้ายเครื่อง ถึงแถว').setFontWeight('bold');
+  sh.getRange(CREW_MID_ROW, 1).setValue('กั้น Middle Crew Zone (6F)').setFontWeight('bold');
   sh.getRange(LAST_SAVE_ROW, 1).setValue('SAVE ล่าสุด').setFontWeight('bold');
   sh.getRange(VERSION_ROW, 1, 1, 2).setValues([['LAYOUT', 'A319-1']]).setFontColor('#9aa3ad');
   sh.getRange(PAX_HEAD_ROW, 1, 1, PAX_HEAD.length).setValues([PAX_HEAD]).setFontWeight('bold').setBackground('#dfeaf5');
@@ -395,11 +398,11 @@ function setupMissionSheet_(sh) {
 function infoRow_(k) { for (let i = 0; i < INFO.length; i++) if (INFO[i][0] === k) return INFO[i][2]; return 0; }
 
 function readMission_(sh) {
-  const top = dv_(sh.getRange(1, 1, VERSION_ROW, 2));
+  const top = dv_(sh.getRange(1, 1, CREW_MID_ROW, 2));
   const info = {};
   INFO.forEach(function (f) { info[f[0]] = top[f[2] - 1][1]; });
   info.aircraft = 'A319';
-  const crew = { front: top[CREW_FRONT_ROW - 1][1], rear: top[CREW_REAR_ROW - 1][1] };
+  const crew = { front: top[CREW_FRONT_ROW - 1][1], rear: top[CREW_REAR_ROW - 1][1], mid: top[CREW_MID_ROW - 1][1] === MID_ON ? MID_ON : '' };
   let lastSave = null;
   try { lastSave = top[LAST_SAVE_ROW - 1][1] ? JSON.parse(top[LAST_SAVE_ROW - 1][1]) : null; } catch (err) { lastSave = null; }
   const seats = seatList_(), pax = {}, crewPax = {}, rowOf = {};
@@ -684,7 +687,7 @@ function opAdminSave_(ctx, b) {
     let n = 0;
     // กั้นที่นั่งลูกเรือ
     if (b.crew) {
-      const nc = { front: clean_(b.crew.front, 6), rear: clean_(b.crew.rear, 6) };
+      const nc = { front: clean_(b.crew.front, 6), rear: clean_(b.crew.rear, 6), mid: clean_(b.crew.mid, 6) === MID_ON ? MID_ON : '' };
       if (nc.front && !crewChoice_(nc.front)) nc.front = '';
       if (nc.rear && !crewChoice_(nc.rear)) nc.rear = '';
       const fi = ROWS.indexOf(nc.front), ri = ROWS.indexOf(nc.rear);
@@ -695,6 +698,12 @@ function opAdminSave_(ctx, b) {
         log.push([nowTxt, ctx.email, by, 'กั้นที่นั่งลูกเรือ (ADMIN)', c[2], cur.crew[c[0]] ? 'ถึงแถว ' + cur.crew[c[0]] : 'ไม่กั้น', nc[c[0]] ? 'ถึงแถว ' + nc[c[0]] : 'ไม่กั้น']);
         cur.crew[c[0]] = nc[c[0]]; n++;
       });
+      if (nc.mid !== cur.crew.mid) {
+        if (!m.sh.getRange(CREW_MID_ROW, 1).getDisplayValue()) m.sh.getRange(CREW_MID_ROW, 1).setValue('กั้น Middle Crew Zone (6F)').setFontWeight('bold');
+        m.sh.getRange(CREW_MID_ROW, 2).setValue(nc.mid);
+        log.push([nowTxt, ctx.email, by, 'กั้นที่นั่งลูกเรือ (ADMIN)', 'Middle Crew Zone (6F)', cur.crew.mid ? 'กั้น' : 'ไม่กั้น', nc.mid ? 'กั้น' : 'ไม่กั้น']);
+        cur.crew.mid = nc.mid; n++;
+      }
     }
     const crewSet = crewRows_(cur.crew);
     const writeRow = function (id, type, val, who) {
