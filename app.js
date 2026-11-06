@@ -448,7 +448,10 @@ function setView(v,quiet){
 }
 function dropAdmin(){atok='';admUser='';if(M)M.crewPax=null}
 function renderAll(){if(!M)return;renderTitle();renderInfo();renderPlan();renderSeatSum();renderManifest();renderHistory();renderAdmin();renderTools();renderNotice()}
+/* backend version: bump NEED_API together with API_VER in Code.gs whenever the web page needs the new backend */
+var NEED_API=4,apiVer=0;
 function renderNotice(){var n=$('notice'),msgs=[];
+  if(apiVer<NEED_API)msgs.push('ระบบหลังบ้าน (Apps Script) ยังเป็นรุ่นเก่า บางอย่างจะไม่ถูกบันทึก เช่น กั้น CREW ZONE จากหัวเครื่องแถว 1 · ผู้ดูแลต้องวางโค้ด apps-script/Code.gs ล่าสุด แล้ว Deploy เป็น New version (URL เดิม)');
   if(closed())msgs.push('ภารกิจนี้ปิดแล้ว ('+(M.closeInfo||'')+') ดูได้อย่างเดียว ถ้าต้องการแก้ไขให้เปิดภารกิจอีกครั้งจากหน้ารายการภารกิจ');
   if(M.statusError)msgs.push('อ่านสภาพที่นั่งจากไฟล์ Seat Plan 319 (For Admin) ไม่ได้ ('+M.statusError+') ผังจึงแสดงทุกที่นั่งเป็นปกติ');
   n.hidden=!msgs.length;n.textContent=msgs.join(' · ')}
@@ -991,7 +994,7 @@ document.addEventListener('visibilitychange',function(){if(!document.hidden&&cur
 
 function start(){
   if(!API){route();return}
-  rawApi({action:'config'}).then(function(res){clientId=res&&res.googleClientId||'';route(true)},function(){showGate('ติดต่อระบบไม่ได้ ตรวจสอบอินเทอร์เน็ตแล้วโหลดหน้าใหม่')});
+  rawApi({action:'config'}).then(function(res){clientId=res&&res.googleClientId||'';apiVer=+(res&&res.apiVer)||0;route(true)},function(){showGate('ติดต่อระบบไม่ได้ ตรวจสอบอินเทอร์เน็ตแล้วโหลดหน้าใหม่')});
 }
 start();
 })();

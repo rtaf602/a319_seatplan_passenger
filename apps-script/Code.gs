@@ -71,6 +71,8 @@ const INFO = [ // [key, ป้าย, แถว]
   ['time', 'BOARDING TIME', 10],
   ['note', 'หมายเหตุ Boarding Pass', 11]
 ];
+// เลขรุ่นของระบบหลังบ้าน หน้าเว็บใช้เตือนเมื่อ Apps Script ยังไม่ได้วางโค้ดใหม่ / Deploy New version (เพิ่มเลขเมื่อแก้หลังบ้าน)
+const API_VER = 4;
 const CREW_FRONT_ROW = 13, CREW_REAR_ROW = 14, LAST_SAVE_ROW = 15, VERSION_ROW = 16, CREW_MID_ROW = 17;
 const MID_ON = 'กั้น';   // B17: กั้น Middle Crew Zone (6F) หรือไม่ (ว่าง = ไม่กั้น)
 const PAX_HEAD_ROW = 18, PAX_FIRST_ROW = 19;
@@ -141,7 +143,7 @@ function crewRows_(c) {
 // =====================================================================
 // Web API (POST แบบ text/plain)
 // =====================================================================
-function doGet() { return json_({ ok: true, app: 'Seat Plan A319 Passenger API' }); }
+function doGet() { return json_({ ok: true, app: 'Seat Plan A319 Passenger API', apiVer: API_VER }); }
 
 function doPost(e) {
   let b;
@@ -161,7 +163,7 @@ function json_(o) { return ContentService.createTextOutput(JSON.stringify(o)).se
 function err_(code, message, extra) { const e = new Error(message || code); e.code = code; e.extra = extra; return e; }
 
 const ACTIONS = {
-  config: function () { return { ok: true, googleClientId: prop_(PROP.cid) || '', pinRequired: true }; },
+  config: function () { return { ok: true, googleClientId: prop_(PROP.cid) || '', pinRequired: true, apiVer: API_VER }; },
   enter: opEnter_,
   missions: opMissions_,
   create: opCreate_,
